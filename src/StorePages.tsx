@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "./lib/supabase";
 import "./StorePages.css";
@@ -74,6 +75,32 @@ function formatPrice(price: number) {
     style: "currency",
     currency: "ZAR",
   }).format(price);
+}
+
+/**
+ * Converts a Supabase Storage object path into a public image URL.
+ * Existing absolute URLs are returned unchanged.
+ */
+function getProductImageUrl(path: string | null): string | null {
+  if (!path?.trim()) return null;
+
+  const trimmedPath = path.trim();
+
+  if (/^https?:\/\//i.test(trimmedPath)) {
+    return trimmedPath;
+  }
+
+  const cleanPath = trimmedPath.replace(/^\/+/, "");
+
+  const objectPath = cleanPath.startsWith("product-media/")
+    ? cleanPath.slice("product-media/".length)
+    : cleanPath;
+
+  const { data } = supabase.storage
+    .from("product-media")
+    .getPublicUrl(objectPath);
+
+  return data.publicUrl || null;
 }
 
 function ShoppingBagIcon() {
@@ -293,57 +320,54 @@ export default function StorePages() {
   return (
     <div className="store-page">
       <header className="store-header">
-        <a className="store-brand" href="/">
-          <span className="store-brand-mark">C</span>
-          <span>
-            <strong>Clearfern Studio</strong>
-            <small>Thoughtful digital goods</small>
+        <a
+          className="store-brand"
+          href="/"
+          aria-label="Clearfern Studio home"
+        >
+          <span className="store-brand-images">
+            <img
+              className="store-brand-logo"
+              src="/clearfern-logo.png"
+              alt=""
+              aria-hidden="true"
+            />
+            </span>
+            <span>
+            <img
+              className="store-brand-wordmark"
+              src="/clearfern-wordmark.png"
+              alt="Clearfern Studio"
+            />
           </span>
         </a>
 
         <nav className="store-nav" aria-label="Shop navigation">
-  <a href="/">Home</a>
-  <a href="/shop">Shop</a>
+          <a href="/">Home</a>
+          <a href="/shop">Shop</a>
+          
 
-  <a
-    href="/cart"
-    className="cart-icon-link"
-    aria-label={`Shopping cart, ${cartCount} ${
-      cartCount === 1 ? "item" : "items"
-    }`}
-    aria-current={isCartPage ? "page" : undefined}
-  >
-    <ShoppingBagIcon />
+          <a
+            href="/cart"
+            className="cart-icon-link"
+            aria-label={`Shopping cart, ${cartCount} ${
+              cartCount === 1 ? "item" : "items"
+            }`}
+            aria-current={isCartPage ? "page" : undefined}
+          >
+            <ShoppingBagIcon />
 
-    {cartCount > 0 && (
-      <span className="cart-icon-badge" aria-hidden="true">
-        {cartCount > 99 ? "99+" : cartCount}
-      </span>
-    )}
-  </a>
-</nav>
+            {cartCount > 0 && (
+              <span className="cart-icon-badge" aria-hidden="true">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
+          </a>
+        </nav>
       </header>
 
       <main className="store-main">
-        <div className="store-breadcrumb">
-          <a href="/">Home</a>
-          <span>/</span>
-
-          {isCartPage ? (
-            <span>Cart</span>
-          ) : isProductPage ? (
-            <>
-              <a href="/shop">Shop</a>
-              <span>/</span>
-              <span>{selectedProduct?.name ?? "Product"}</span>
-            </>
-          ) : (
-            <span>Shop</span>
-          )}
-        </div>
-
         <section className="store-heading">
-          <span className="store-eyebrow">CLEARFERN STUDIO</span>
           <h1>{pageTitle}</h1>
           <p>
             Thoughtfully designed digital resources for your everyday life.
@@ -403,7 +427,11 @@ export default function StorePages() {
                         Clear cart
                       </button>
                     ) : (
-                      <div className="clear-cart-confirm" role="group" aria-label="Confirm clearing cart">
+                      <div
+                        className="clear-cart-confirm"
+                        role="group"
+                        aria-label="Confirm clearing cart"
+                      >
                         <span>Remove all items?</span>
                         <button
                           className="store-text-button"
@@ -423,89 +451,101 @@ export default function StorePages() {
                     )}
                   </div>
 
-                  {cartProducts.map(({ item, product }) => (
-                    <article className="cart-item" key={product.id}>
-                      <a
-                        className="cart-image"
-                        href={`/product/${encodeURIComponent(product.slug)}`}
-                        aria-label={`View ${product.name}`}
-                      >
-                        {product.cover_image_path ? (
-                          <img src={product.cover_image_path} alt="" />
-                        ) : (
-                          <span>C.</span>
-                        )}
-                      </a>
+                  {cartProducts.map(({ item, product }) => {
+                    const imageUrl = getProductImageUrl(
+                      product.cover_image_path,
+                    );
 
-                      <div className="cart-item-info">
+                    return (
+                      <article className="cart-item" key={product.id}>
                         <a
+                          className="cart-image"
                           href={`/product/${encodeURIComponent(product.slug)}`}
+                          aria-label={`View ${product.name}`}
                         >
-                          <h2>{product.name}</h2>
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={product.name}
+                              onError={(event) => {
+                                event.currentTarget.style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <span>C.</span>
+                          )}
                         </a>
 
-                        <p className="cart-item-price">
-                          {formatPrice(Number(product.price_zar))} each
-                        </p>
-
-                        <div className="cart-quantity-control">
-                          <span>Quantity</span>
-
-                          <div
-                            className="quantity-stepper"
-                            role="group"
-                            aria-label={`Quantity for ${product.name}`}
+                        <div className="cart-item-info">
+                          <a
+                            href={`/product/${encodeURIComponent(product.slug)}`}
                           >
-                            <button
-                              type="button"
-                              aria-label={`Decrease quantity of ${product.name}`}
-                              disabled={item.quantity <= 1}
-                              onClick={() =>
-                                updateQuantity(
-                                  product.id,
-                                  item.quantity - 1,
-                                )
-                              }
-                            >
-                              −
-                            </button>
+                            <h2>{product.name}</h2>
+                          </a>
 
-                            <output aria-live="polite">
-                              {item.quantity}
-                            </output>
+                          <p className="cart-item-price">
+                            {formatPrice(Number(product.price_zar))} each
+                          </p>
 
-                            <button
-                              type="button"
-                              aria-label={`Increase quantity of ${product.name}`}
-                              disabled={item.quantity >= MAX_QUANTITY}
-                              onClick={() =>
-                                updateQuantity(
-                                  product.id,
-                                  item.quantity + 1,
-                                )
-                              }
+                          <div className="cart-quantity-control">
+                            <span>Quantity</span>
+
+                            <div
+                              className="quantity-stepper"
+                              role="group"
+                              aria-label={`Quantity for ${product.name}`}
                             >
-                              +
-                            </button>
+                              <button
+                                type="button"
+                                aria-label={`Decrease quantity of ${product.name}`}
+                                disabled={item.quantity <= 1}
+                                onClick={() =>
+                                  updateQuantity(
+                                    product.id,
+                                    item.quantity - 1,
+                                  )
+                                }
+                              >
+                                −
+                              </button>
+
+                              <output aria-live="polite">
+                                {item.quantity}
+                              </output>
+
+                              <button
+                                type="button"
+                                aria-label={`Increase quantity of ${product.name}`}
+                                disabled={item.quantity >= MAX_QUANTITY}
+                                onClick={() =>
+                                  updateQuantity(
+                                    product.id,
+                                    item.quantity + 1,
+                                  )
+                                }
+                              >
+                                +
+                              </button>
+                            </div>
                           </div>
+
+                          <button
+                            className="store-text-button cart-remove-button"
+                            type="button"
+                            onClick={() => removeFromCart(product.id)}
+                          >
+                            Remove
+                          </button>
                         </div>
 
-                        <button
-                          className="store-text-button cart-remove-button"
-                          type="button"
-                          onClick={() => removeFromCart(product.id)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-
-                      <strong className="cart-line-total">
-                        {formatPrice(
-                          Number(product.price_zar) * item.quantity,
-                        )}
-                      </strong>
-                    </article>
-                  ))}
+                        <strong className="cart-line-total">
+                          {formatPrice(
+                            Number(product.price_zar) * item.quantity,
+                          )}
+                        </strong>
+                      </article>
+                    );
+                  })}
 
                   <a className="store-continue-link" href="/shop">
                     ← Continue shopping
@@ -561,10 +601,16 @@ export default function StorePages() {
           ) : (
             <section className="product-detail">
               <div className="product-detail-image">
-                {selectedProduct.cover_image_path ? (
+                {getProductImageUrl(selectedProduct.cover_image_path) ? (
                   <img
-                    src={selectedProduct.cover_image_path}
+                    src={
+                      getProductImageUrl(selectedProduct.cover_image_path) ??
+                      undefined
+                    }
                     alt={selectedProduct.name}
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
                   />
                 ) : (
                   <span className="product-detail-placeholder">C.</span>
@@ -681,53 +727,62 @@ export default function StorePages() {
               </div>
             ) : (
               <section className="store-product-grid">
-                {filteredProducts.map((product) => (
-                  <article className="store-product-card" key={product.id}>
-                    <a
-                      className="store-product-image"
-                      href={`/product/${encodeURIComponent(product.slug)}`}
-                    >
-                      {product.cover_image_path ? (
-                        <img
-                          src={product.cover_image_path}
-                          alt=""
-                          loading="lazy"
-                        />
-                      ) : (
-                        <span className="store-product-placeholder">C.</span>
-                      )}
+                {filteredProducts.map((product) => {
+                  const imageUrl = getProductImageUrl(
+                    product.cover_image_path,
+                  );
 
-                      <span className="store-digital-label">
-                        DIGITAL PRODUCT
-                      </span>
-                    </a>
-
-                    <div className="store-product-info">
+                  return (
+                    <article className="store-product-card" key={product.id}>
                       <a
+                        className="store-product-image"
                         href={`/product/${encodeURIComponent(product.slug)}`}
                       >
-                        <h2>{product.name}</h2>
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={product.name}
+                            loading="lazy"
+                            onError={(event) => {
+                              event.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <span className="store-product-placeholder">C.</span>
+                        )}
+
+                        <span className="store-digital-label">
+                          DIGITAL PRODUCT
+                        </span>
                       </a>
 
-                      <p>
-                        {product.description ||
-                          "A thoughtfully made digital resource."}
-                      </p>
-
-                      <div className="store-product-footer">
-                        <strong>
-                          {formatPrice(Number(product.price_zar))}
-                        </strong>
-
+                      <div className="store-product-info">
                         <a
                           href={`/product/${encodeURIComponent(product.slug)}`}
                         >
-                          View details →
+                          <h2>{product.name}</h2>
                         </a>
+
+                        <p>
+                          {product.description ||
+                            "A thoughtfully made digital resource."}
+                        </p>
+
+                        <div className="store-product-footer">
+                          <strong>
+                            {formatPrice(Number(product.price_zar))}
+                          </strong>
+
+                          <a
+                            href={`/product/${encodeURIComponent(product.slug)}`}
+                          >
+                            View details →
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                ))}
+                    </article>
+                  );
+                })}
               </section>
             )}
           </>
@@ -735,7 +790,9 @@ export default function StorePages() {
       </main>
 
       <footer className="store-footer">
-        <a href="/">Clearfern Studio</a>
+        <a href="/" className="store-footer-brand">
+          Clearfern Studio
+        </a>
         <span>Thoughtfully made. Ready for your everyday.</span>
         <a href="/shop">Continue exploring</a>
       </footer>

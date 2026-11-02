@@ -92,7 +92,7 @@
 }
 
 .store-heading {
-  margin: 45px 0 38px;
+  margin: 10px 0 38px;
 }
 
 .store-eyebrow {
@@ -702,4 +702,87 @@
   font-weight: 700;
   line-height: 1;
   box-shadow: 0 0 0 2px #fff;
+}
+
+
+/* Clearfern Studio image branding in the store header */
+
+.store-brand {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 0;
+  color: #153752;
+  text-decoration: none;
+}
+
+.store-brand-images {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.store-brand-logo {
+  display: block;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  object-fit: contain;
+}
+
+.store-brand-wordmark {
+  display: block;
+  width: 190px;
+  max-width: 100%;
+  height: 48px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+/* Keep the logo and wordmark aligned on smaller screens */
+
+@media (max-width: 850px) {
+  .store-brand-logo {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+  }
+
+  .store-brand-wordmark {
+    width: 165px;
+    height: 42px;
+  }
+
+  .store-brand-images {
+    gap: 9px;
+  }
+}
+
+@media (max-width: 600px) {
+  .store-header {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .store-brand-logo {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  .store-brand-wordmark {
+    width: 125px;
+    height: 36px;
+  }
+
+  .store-brand-images {
+    gap: 7px;
+  }
+
+  .store-nav {
+    flex-wrap: wrap;
+  }
 }

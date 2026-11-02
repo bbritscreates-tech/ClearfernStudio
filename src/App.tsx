@@ -70,6 +70,20 @@ function formatPrice(price: number) {
   }).format(price);
 }
 
+function getProductImageUrl(path: string | null): string | null {
+  if (!path) return null;
+
+  // Support existing full URLs as well as Supabase storage paths.
+  if (/^https?:\/\//i.test(path)) return path;
+
+  const cleanPath = path.replace(/^\/+/, "");
+  const { data } = supabase.storage
+    .from("product-media")
+    .getPublicUrl(cleanPath);
+
+  return data.publicUrl;
+}
+
 function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,10 +157,18 @@ function HomePage() {
           aria-label="Clearfern Studio home"
           onClick={closeMenu}
         >
-          <span className="brand-mark">C</span>
-          <span className="brand-copy">
-            <strong>Clearfern Studio</strong>
-            <small>Thoughtful digital goods</small>
+          <span className="brand-images">
+            <img
+              className="brand-logo"
+              src="/clearfern-logo.png"
+              alt=""
+              aria-hidden="true"
+            />
+            <img
+              className="brand-wordmark"
+              src="/clearfern-wordmark.png"
+              alt="Clearfern Studio"
+            />
           </span>
         </a>
 
@@ -330,9 +352,12 @@ function HomePage() {
                   <div className="product-art">
                     {product.cover_image_path ? (
                       <img
-                        src={product.cover_image_path}
-                        alt=""
+                        src={getProductImageUrl(product.cover_image_path) ?? ""}
+                        alt={product.name}
                         loading="lazy"
+                        onError={(event) => {
+                          event.currentTarget.style.display = "none";
+                        }}
                       />
                     ) : (
                       <div className="product-placeholder">
