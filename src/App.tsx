@@ -1,454 +1,299 @@
 
-import { useEffect, useState } from "react";
-import { supabase } from "./lib/supabase";
+import { useState } from "react";
 import "./App.css";
-import StorePages from "./StorePages";
+import { Link } from "react-router-dom";
 
-type Product = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  price_zar: number;
-  status: "draft" | "active" | "archived";
-  cover_image_path: string | null;
-};
+const categories = [
+  {
+    number: "01",
+    title: "Planners & organisation",
+    description: "Make room for your goals, routines and everyday plans.",
+    symbol: "▤",
+    style: "planner",
+  },
+  {
+    number: "02",
+    title: "Social media templates",
+    description: "Create beautiful, consistent content for your brand.",
+    symbol: "✳",
+    style: "social",
+  },
+  {
+    number: "03",
+    title: "Business resources",
+    description: "Practical tools to help you run and grow your business.",
+    symbol: "↗",
+    style: "business",
+  },
+];
 
-type CartItem = {
-  productId: string;
-  quantity: number;
-};
+function App() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-function readHomeCartCount(): number {
-  try {
-    const saved = localStorage.getItem("clearfern-cart");
-    const cart: unknown = saved ? JSON.parse(saved) : [];
-
-    if (!Array.isArray(cart)) return 0;
-
-    return cart.reduce((total: number, item: CartItem) => {
-      if (
-        item &&
-        typeof item.productId === "string" &&
-        Number.isInteger(item.quantity) &&
-        item.quantity > 0
-      ) {
-        return total + item.quantity;
-      }
-
-      return total;
-    }, 0);
-  } catch {
-    return 0;
-  }
-}
-
-function ShoppingBagIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="23"
-      height="23"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M5 8h14l1 13H4L5 8Z" />
-      <path d="M9 9V6a3 3 0 0 1 6 0v3" />
-    </svg>
-  );
-}
-
-function formatPrice(price: number) {
-  return new Intl.NumberFormat("en-ZA", {
-    style: "currency",
-    currency: "ZAR",
-  }).format(price);
-}
-
-function getProductImageUrl(path: string | null): string | null {
-  if (!path) return null;
-
-  // Support existing full URLs as well as Supabase storage paths.
-  if (/^https?:\/\//i.test(path)) return path;
-
-  const cleanPath = path.replace(/^\/+/, "");
-  const { data } = supabase.storage
-    .from("product-media")
-    .getPublicUrl(cleanPath);
-
-  return data.publicUrl;
-}
-
-function HomePage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [category, setCategory] = useState("All products");
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [homeCartCount, setHomeCartCount] = useState(readHomeCartCount);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadProducts() {
-      setLoading(true);
-      setError("");
-
-      const { data, error: queryError } = await supabase
-        .from("products")
-        .select(
-          "id, name, slug, description, price_zar, status, cover_image_path",
-        )
-        .eq("status", "active")
-        .order("created_at", { ascending: false });
-
-      if (!isMounted) return;
-
-      if (queryError) {
-        setError("We couldn't load the products. Please try again later.");
-      } else {
-        setProducts((data ?? []) as Product[]);
-      }
-
-      setLoading(false);
-    }
-
-    void loadProducts();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    const updateCartCount = () => {
-      setHomeCartCount(readHomeCartCount());
-    };
-
-    window.addEventListener("pageshow", updateCartCount);
-    window.addEventListener("storage", updateCartCount);
-
-    return () => {
-      window.removeEventListener("pageshow", updateCartCount);
-      window.removeEventListener("storage", updateCartCount);
-    };
-  }, []);
-
-  const closeMenu = () => setMenuOpen(false);
-
-  const visibleProducts =
-    category === "All products"
-      ? products
-      : products.filter((product) =>
-          product.name.toLowerCase().includes(category.toLowerCase()),
-        );
+  const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
     <div className="site-shell">
+      <div className="announcement-bar">
+        Thoughtfully made digital goods for everyday life.
+      </div>
+
       <header className="site-header">
-        <a
-          className="brand"
-          href="#home"
-          aria-label="Clearfern Studio home"
-          onClick={closeMenu}
-        >
-          <span className="brand-images">
-            <img
-              className="brand-logo"
-              src="/clearfern-logo.png"
-              alt=""
-              aria-hidden="true"
-            />
-            <img
-              className="brand-wordmark"
-              src="/clearfern-wordmark.png"
-              alt="Clearfern Studio"
-            />
-          </span>
+        <a className="wordmark" href="#home" aria-label="Clearfern Studio home">
+          <span className="wordmark-name">clearfern studio</span>
+          <span className="wordmark-subtitle">DIGITAL GOODS, THOUGHTFULLY MADE</span>
         </a>
 
-        <button
-          className="mobile-menu-toggle"
-          type="button"
-          aria-label={
-            menuOpen ? "Close navigation menu" : "Open navigation menu"
-          }
-          aria-expanded={menuOpen}
-          aria-controls="main-navigation"
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          <span
-            className={
-              menuOpen
-                ? "hamburger-line line-one open"
-                : "hamburger-line line-one"
-            }
-          />
-          <span
-            className={
-              menuOpen
-                ? "hamburger-line line-two open"
-                : "hamburger-line line-two"
-            }
-          />
-          <span
-            className={
-              menuOpen
-                ? "hamburger-line line-three open"
-                : "hamburger-line line-three"
-            }
-          />
-        </button>
-
         <nav
+          className={`main-nav${mobileMenuOpen ? " is-open" : ""}`}
           id="main-navigation"
-          className={`site-nav${menuOpen ? " is-open" : ""}`}
           aria-label="Main navigation"
         >
-          <a href="/shop" onClick={closeMenu}>
-            Shop
-          </a>
-          <a href="#about" onClick={closeMenu}>
-            Our approach
-          </a>
-          <a href="#contact" onClick={closeMenu}>
-            Contact
-          </a>
+          <Link to="/shop" onClick={closeMobileMenu}>Shop all</Link>
+          <a href="#categories" onClick={closeMobileMenu}>Collections</a>
+          <a href="#about" onClick={closeMobileMenu}>Our story</a>
         </nav>
 
-        <div className="header-actions">
-          <a
-            href="/cart"
-            className="home-cart-icon"
-            aria-label={`Shopping cart, ${homeCartCount} ${
-              homeCartCount === 1 ? "item" : "items"
-            }`}
-            onClick={closeMenu}
-          >
-            <ShoppingBagIcon />
-            {homeCartCount > 0 && (
-              <span className="home-cart-badge" aria-hidden="true">
-                {homeCartCount > 99 ? "99+" : homeCartCount}
-              </span>
-            )}
-          </a>
+        <button
+          className={`mobile-menu-toggle${mobileMenuOpen ? " is-open" : ""}`}
+          type="button"
+          aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-controls="main-navigation"
+          aria-expanded={mobileMenuOpen}
+          onClick={() => setMobileMenuOpen((open) => !open)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
 
-          <a className="header-link" href="/shop" onClick={closeMenu}>
-            Explore the shop <span aria-hidden="true">↗</span>
-          </a>
-        </div>
+        <a className="header-cart" href="/shop" aria-label="Shopping bag" onClick={closeMobileMenu}>
+          <span>Bag</span>
+          <span className="cart-count">0</span>
+        </a>
       </header>
 
       <main>
-        <section className="hero" id="home">
+        <section className="hero-section" id="home">
           <div className="hero-copy">
-            <span className="eyebrow">DIGITAL GOODS, MADE WITH PURPOSE</span>
-            <h1>
-              Make space for
-              <br />
-              <span>what matters.</span>
-            </h1>
-            <p>
-              Thoughtfully designed digital resources to help you organise
-              your days, nurture your ideas and make progress at your own pace.
+            <p className="eyebrow">
+              <span className="eyebrow-line" />
+              A LITTLE SPACE TO GROW
             </p>
-            <a className="primary-button" href="#shop">
-              Explore the collection <span aria-hidden="true">→</span>
-            </a>
+
+            <h1>
+              Make space
+              <br />
+              for <em>what matters.</em>
+            </h1>
+
+            <p className="hero-description">
+              Thoughtfully designed digital tools to help you plan your days,
+              bring your ideas to life and grow your business — one small step
+              at a time.
+            </p>
+
+            <div className="hero-actions">
+              <Link className="button button-primary" to="/shop">
+  Explore the shop <span aria-hidden="true">↗</span>
+</Link>
+
+              <a className="text-link" href="#categories">
+                Find your something <span aria-hidden="true">→</span>
+              </a>
+            </div>
+
             <div className="hero-note">
-              <span className="note-dot" />
-              Digital products, ready for your everyday
+              <span className="note-check">✓</span>
+              <span>Instant digital downloads</span>
+              <span className="note-divider">·</span>
+              <span>Made for real life</span>
             </div>
           </div>
 
-          <div className="hero-art" aria-label="A calm, minimal illustration">
+          <div className="hero-art" aria-label="Digital stationery preview">
             <div className="art-sun" />
-            <div className="art-card art-card-back">
-              <span className="art-line short" />
-              <span className="art-line" />
-              <span className="art-line medium" />
-              <span className="art-check">✓</span>
-              <span className="art-line" />
+            <div className="art-caption">A calmer kind of productivity.</div>
+
+            <div className="hero-paper hero-paper-back">
+              <span className="paper-small-label">A NOTE TO SELF</span>
+              <span className="back-paper-line" />
+              <span className="back-paper-line short" />
+              <span className="back-paper-line" />
+              <span className="back-paper-line medium" />
             </div>
-            <div className="art-card art-card-front">
-              <span className="art-label">A LITTLE SPACE TO GROW</span>
-              <div className="art-leaf">✳</div>
-              <h2>Plan gently.</h2>
-              <h2>Grow steadily.</h2>
-              <span className="art-rule" />
-              <span className="art-caption">Your pace. Your progress.</span>
+
+            <div className="hero-paper hero-paper-front">
+              <div className="mockup-topline">
+                <span>CLEARFERN</span>
+                <span>01 / 07</span>
+              </div>
+              <p className="mockup-kicker">YOUR WEEK, YOUR WAY</p>
+              <h2>
+                A fresh
+                <br />
+                <em>start.</em>
+              </h2>
+              <div className="mockup-rule" />
+              <div className="mockup-task">
+                <span className="task-square" />
+                <span>Make a little plan</span>
+              </div>
+              <div className="mockup-task">
+                <span className="task-square" />
+                <span>Focus on what matters</span>
+              </div>
+              <div className="mockup-task">
+                <span className="task-square" />
+                <span>Leave room to breathe</span>
+              </div>
+              <div className="mockup-footer">SMALL STEPS COUNT</div>
             </div>
-            <div className="art-orbit orbit-one" />
-            <div className="art-orbit orbit-two" />
+
+            <div className="hero-sticker">
+              <span>made for</span>
+              <strong>your kind<br />of everyday</strong>
+              <span className="sticker-star">✳</span>
+            </div>
+
+            <div className="art-bottom-note">
+              <span className="art-bottom-dot" />
+              DIGITAL PLANNERS · CREATIVE TOOLS · BUSINESS RESOURCES
+            </div>
           </div>
         </section>
 
-        <section className="promise-strip">
-          <div>
-            <span>01</span> Made for real life
-          </div>
-          <div>
-            <span>02</span> Simple to use
-          </div>
-          <div>
-            <span>03</span> Designed with care
-          </div>
+        <section className="trust-strip" aria-label="Store benefits">
+          <div><span>✳</span> Thoughtfully designed</div>
+          <div><span>↗</span> Ready when you are</div>
+          <div><span>♡</span> Made for everyday life</div>
         </section>
 
-        <section className="shop-section" id="shop">
+        <section className="categories-section section-pad" id="categories">
           <div className="section-heading">
             <div>
-              <span className="eyebrow">THE COLLECTION</span>
-              <h2>Find your next favourite.</h2>
-              <p>
-                Explore practical digital resources designed to make life feel
-                a little clearer.
-              </p>
+              <p className="eyebrow">A PLACE TO BEGIN</p>
+              <h2>A little something for <em>your next step.</em></h2>
             </div>
-            <span className="product-count">
-              {products.length} {products.length === 1 ? "product" : "products"}
-            </span>
-          </div>
-
-          <div className="category-list" aria-label="Filter products">
-            {["All products", "Planner", "Template", "Workbook"].map((item) => (
-              <button
-                className={category === item ? "category active" : "category"}
-                key={item}
-                onClick={() => setCategory(item)}
-                type="button"
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-
-          {loading ? (
-            <div className="shop-message" role="status">
-              Loading the collection…
-            </div>
-          ) : error ? (
-            <div className="shop-message error-message" role="alert">
-              {error}
-            </div>
-          ) : visibleProducts.length === 0 ? (
-            <div className="empty-collection">
-              <div className="empty-icon">✳</div>
-              <h3>A little something is growing.</h3>
-              <p>
-                Our digital collection is being prepared. Please check back
-                soon to discover what’s new.
-              </p>
-            </div>
-          ) : (
-            <div className="product-grid">
-              {visibleProducts.map((product) => (
-                <article className="product-card" key={product.id}>
-                  <div className="product-art">
-                    {product.cover_image_path ? (
-                      <img
-                        src={getProductImageUrl(product.cover_image_path) ?? ""}
-                        alt={product.name}
-                        loading="lazy"
-                        onError={(event) => {
-                          event.currentTarget.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <div className="product-placeholder">
-                        <span className="product-placeholder-mark">C.</span>
-                        <span>Clearfern Studio</span>
-                      </div>
-                    )}
-                    <span className="digital-label">DIGITAL PRODUCT</span>
-                  </div>
-                  <div className="product-details">
-                    <h3>{product.name}</h3>
-                    <p>
-                      {product.description ||
-                        "A thoughtfully made digital resource."}
-                    </p>
-                    <div className="product-footer">
-                      <strong>{formatPrice(Number(product.price_zar))}</strong>
-                      <a
-                        className="coming-soon-label"
-                        href={`/product/${encodeURIComponent(product.slug)}`}
-                      >
-                        View details
-                      </a>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-
-          <p className="shop-footnote">
-            Prices are currently shown in South African rand (ZAR). Checkout
-            and international currency display will be configured in a later step.
-          </p>
-        </section>
-
-        <section className="about-section" id="about">
-          <div className="about-symbol">✳</div>
-          <div>
-            <span className="eyebrow">A MORE THOUGHTFUL WAY</span>
-            <h2>
-              Useful things.
-              <br />
-              Room to grow.
-            </h2>
-            <p>
-              Clearfern Studio is built around a simple idea: the right tools
-              can help everyday life feel more manageable. Our aim is to create
-              practical digital resources that are clear, considered and easy
-              to make your own.
+            <p className="section-intro">
+              Whether you're organising your week, creating content or building
+              a business, start with what you need most.
             </p>
           </div>
+
+          <div className="category-grid">
+            {categories.map((category) => (
+              <a
+                className={`category-card category-${category.style}`}
+                href="/shop"
+                key={category.number}
+              >
+                <div className="category-card-top">
+                  <span className="category-number">{category.number}</span>
+                  <span className="category-arrow">↗</span>
+                </div>
+                <div className="category-art" aria-hidden="true">
+                  <span className="category-symbol">{category.symbol}</span>
+                  <span className="category-art-caption">
+                    {category.style === "planner"
+                      ? "PLAN WITH PURPOSE"
+                      : category.style === "social"
+                        ? "CREATE WITH CONFIDENCE"
+                        : "GROW AT YOUR PACE"}
+                  </span>
+                </div>
+                <h3>{category.title}</h3>
+                <p>{category.description}</p>
+                <span className="category-link">
+                  Explore collection <span>→</span>
+                </span>
+              </a>
+            ))}
+          </div>
         </section>
 
-        <section className="contact-section" id="contact">
-          <span className="eyebrow">STAY IN TOUCH</span>
-          <h2>Good things take shape.</h2>
-          <p>Have a question or an idea? We’d love to hear from you.</p>
-          <a
-            className="secondary-button"
-            href="mailto:hello@clearfernstudio.com"
-          >
-            Contact the studio
-          </a>
-          <small>
-            Update this contact address when your business email is ready.
-          </small>
+        <section className="featured-section section-pad" id="shop">
+  <div className="section-heading featured-heading">
+    <div>
+      <p className="eyebrow">THE DIGITAL EDIT</p>
+      <h2>
+        Made with intention. <em>Ready for you.</em>
+      </h2>
+    </div>
+    <p className="section-intro">
+      Explore thoughtful digital tools for planning, creativity and business.
+    </p>
+  </div>
+
+  <div className="home-shop-cta">
+    <p>Find the tool that fits your next step.</p>
+    <Link className="button button-primary" to="/shop">
+      Explore all products <span aria-hidden="true">↗</span>
+    </Link>
+  </div>
+</section>
+
+        <section className="brand-note-section" id="about">
+          <div className="brand-note-art" aria-hidden="true">
+            <div className="note-card">
+              <span className="note-card-kicker">A GENTLE REMINDER</span>
+              <span className="note-card-main">
+                You don't have
+                <br />
+                to do it all.
+              </span>
+              <span className="note-card-flower">✳</span>
+              <span className="note-card-footer">ONE THING AT A TIME.</span>
+            </div>
+          </div>
+          <div className="brand-note-copy">
+            <p className="eyebrow">THE CLEARFERN WAY</p>
+            <h2>Useful things.<br /><em>Less overwhelm.</em></h2>
+            <p>
+              We believe the right tool can make a busy day feel lighter, a
+              creative idea feel possible and a small business feel a little
+              more manageable.
+            </p>
+            <p>
+              Clearfern Studio is being built around digital products that are
+              practical, considered and easy to make your own.
+            </p>
+            <a className="text-link" href="#categories">
+              Find your next step <span>→</span>
+            </a>
+          </div>
+        </section>
+
+        <section className="newsletter-section">
+          <div className="newsletter-mark" aria-hidden="true">✳</div>
+          <p className="eyebrow">A LITTLE GOOD THING IN YOUR INBOX</p>
+          <h2>Make room for <em>good ideas.</em></h2>
+          <p>
+            Updates, creative inspiration and a first look at new digital
+            products.
+          </p>
+          <span className="newsletter-note">
+            Our mailing list is coming soon.
+          </span>
         </section>
       </main>
 
       <footer className="site-footer">
-        <a className="footer-brand" href="#home">
-          Clearfern Studio
-        </a>
-        <span>Thoughtfully made. Ready for your everyday.</span>
-        <span>© {new Date().getFullYear()} Clearfern Studio</span>
+        <div className="footer-main">
+          <a className="wordmark footer-wordmark" href="#home">
+            <span className="wordmark-name">clearfern studio</span>
+            <span className="wordmark-subtitle">DIGITAL GOODS, THOUGHTFULLY MADE</span>
+          </a>
+          <p>Thoughtful digital tools for your everyday.</p>
+          <a className="back-to-top" href="#home">Back to top ↑</a>
+        </div>
+        <div className="footer-bottom">
+          <span>© {new Date().getFullYear()} Clearfern Studio</span>
+          <span>Made with care, for real life.</span>
+        </div>
       </footer>
     </div>
   );
 }
 
-export default function App() {
-  const path = window.location.pathname.replace(/\/+$/, "") || "/";
-
-  if (
-    path === "/shop" ||
-    path === "/cart" ||
-    path.startsWith("/product/")
-  ) {
-    return <StorePages />;
-  }
-
-  return <HomePage />;
-}
+export default App;

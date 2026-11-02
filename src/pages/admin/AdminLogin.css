@@ -1,0 +1,213 @@
+
+/* Clearfern Studio — Admin Login */
+
+.admin-login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background:
+    radial-gradient(ellipse at top left, rgb(224 239 226 / 75%), transparent 48%),
+    linear-gradient(135deg, #f5f8f3 0%, #edf3ed 100%);
+  color: #18332b;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.admin-login-page *,
+.admin-login-page *::before,
+.admin-login-page *::after {
+  box-sizing: border-box;
+}
+
+.admin-login-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 42px;
+  border: 1px solid #e1e9e1;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 20px 60px rgb(24 51 43 / 9%);
+}
+
+.admin-login-page .admin-brand {
+  display: inline-block;
+  margin-bottom: 38px;
+  color: #18332b;
+  font-size: 25px;
+  font-weight: 750;
+  letter-spacing: -1px;
+  text-decoration: none;
+}
+
+.admin-login-page .admin-brand span {
+  color: #477d65;
+  font-weight: 500;
+}
+
+.admin-login-page .admin-eyebrow {
+  margin: 0 0 12px;
+  color: #477d65;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.admin-login-page h1 {
+  margin: 0 0 12px;
+  color: #18332b;
+  font-size: clamp(30px, 5vw, 36px);
+  font-weight: 750;
+  letter-spacing: -1.2px;
+  line-height: 1.2;
+}
+
+.admin-login-page .admin-muted {
+  margin: 0 0 30px;
+  color: #75837a;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.admin-login-page .admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-login-page .admin-form label {
+  margin-top: 8px;
+  color: #2d4438;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.admin-login-page .admin-form input {
+  width: 100%;
+  min-height: 49px;
+  padding: 13px 14px;
+  border: 1px solid #dce5dd;
+  border-radius: 9px;
+  outline: none;
+  background: #fbfcfa;
+  color: #18332b;
+  font: inherit;
+  font-size: 14px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.admin-login-page .admin-form input::placeholder {
+  color: #a2ada4;
+}
+
+.admin-login-page .admin-form input:hover {
+  border-color: #b9cdbd;
+}
+
+.admin-login-page .admin-form input:focus {
+  border-color: #477d65;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgb(71 125 101 / 12%);
+}
+
+.admin-login-page .admin-form button {
+  width: 100%;
+  min-height: 49px;
+  margin-top: 18px;
+  padding: 13px 18px;
+  border: 1px solid #245b43;
+  border-radius: 9px;
+  background: #245b43;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  transition:
+    background 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.admin-login-page .admin-form button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #194832;
+  box-shadow: 0 5px 14px rgb(36 91 67 / 18%);
+}
+
+.admin-login-page .admin-form button:focus-visible {
+  outline: 3px solid #83b99a;
+  outline-offset: 3px;
+}
+
+.admin-login-page .admin-form button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.admin-login-page .admin-error {
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #f0caca;
+  border-radius: 8px;
+  background: #fff3f2;
+  color: #a12e2e;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.admin-login-page .admin-back-link {
+  display: block;
+  width: fit-content;
+  margin: 26px auto 0;
+  color: #668071;
+  font-size: 13px;
+  text-align: center;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.admin-login-page .admin-back-link:hover {
+  color: #245b43;
+  text-decoration: underline;
+}
+
+.admin-login-page a:focus-visible {
+  outline: 2px solid #477d65;
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+
+/* Mobile adjustments */
+
+@media (max-width: 480px) {
+  .admin-login-page {
+    align-items: flex-start;
+    padding: 24px 14px;
+  }
+
+  .admin-login-card {
+    margin: auto 0;
+    padding: 30px 23px;
+    border-radius: 15px;
+  }
+
+  .admin-login-page .admin-brand {
+    margin-bottom: 32px;
+    font-size: 23px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-login-page *,
+  .admin-login-page *::before,
+  .admin-login-page *::after {
+    transition: none !important;
+  }
+}
